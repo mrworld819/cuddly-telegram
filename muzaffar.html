@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>KidsBank — Детский банк</title>
+
+<!-- Шрифты -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --kid-blue: #4facfe;
+  --kid-purple: #a855f7;
+  --kid-pink: #ff6b9d;
+  --kid-yellow: #ffc107;
+  --kid-green: #10b981;
+  --kid-orange: #f97316;
+  --kid-red: #ef4444;
+  --kid-teal: #14b8a6;
+  
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --card-blue: linear-gradient(135deg, #4facfe, #00f2fe);
+  --card-pink: linear-gradient(135deg, #ff6b9d, #ff8e53);
+  --card-green: linear-gradient(135deg, #10b981, #34d399);
+  --card-purple: linear-gradient(135deg, #a855f7, #d8b4fe);
+  --card-orange: linear-gradient(135deg, #f97316, #fbbf24);
+  
+  --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 40px;
+  
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+}
+
+body {
+  font-family: 'Nunito', 'Inter', sans-serif;
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  color: #1f2937;
+}
+
+/* Анимации */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ===== ЭКРАН ВХОДА ===== */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+}
+
+.auth-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+}
+
+.auth-logo {
+  margin-bottom: var(--space-xl);
+}
+
+.auth-logo .emoji {
+  font-size: 64px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.auth-logo h1 {
+  font-size: 28px;
+  background: var(--bg-gradient);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  margin-top: var(--space-sm);
+}
+
+.auth-card .form-group {
+  margin-bottom: var(--space-md);
+}
+
+.auth-card .form-control {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: 60px;
+  font-size: 16px;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.3s;
+}
+
+.auth-card .form-control:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 60px;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #a855f7, #4facfe);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
+}
+
+.auth-link {
+  color: #a855f7;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-md);
+  display: inline-block;
+}
+
+/* ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== */
+.main-container {
+  min-height: 100vh;
+  padding-bottom: 100px;
+}
+
+/* Хедер */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.welcome-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.welcome-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #a855f7;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: all 0.3s;
+}
+
+.logout-btn:hover {
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+/* Банковская карта */
+.bank-card {
+  background: var(--card-blue);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  color: white;
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.bank-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+  transform: rotate(30deg);
+}
+
+.card-chip {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.chip {
+  width: 45px;
+  height: 35px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.card-number {
+  font-size: 22px;
+  letter-spacing: 3px;
+  font-family: monospace;
+  text-align: center;
+  margin: var(--space-lg) 0;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+/* Баланс */
+.balance-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  text-align: center;
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.balance-label {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: var(--space-xs);
+}
+
+.balance-amount {
+  font-size: 48px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #a855f7, #4facfe);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* Кнопки действий */
+.actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.action-btn-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: var(--shadow-sm);
+}
+
+.action-btn-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.action-emoji {
+  font-size: 28px;
+  display: block;
+  margin-bottom: var(--space-xs);
+}
+
+.action-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+/* Магазин игрушек */
+.shop-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-sm);
+}
+
+.product-item {
+  background: #f9fafb;
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.product-item:hover {
+  transform: translateY(-3px);
+  border-color: #a855f7;
+  box-shadow: var(--shadow-md);
+}
+
+.product-emoji {
+  font-size: 40px;
+  margin-bottom: var(--space-xs);
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.product-price {
+  font-weight: 800;
+  color: #a855f7;
+  font-size: 14px;
+  margin: var(--space-xs) 0;
+}
+
+/* История операций */
+.history-section {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.history-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.history-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.history-emoji {
+  font-size: 24px;
+}
+
+.history-text {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.history-date {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.history-amount {
+  font-weight: 700;
+}
+
+.history-amount.positive {
+  color: #10b981;
+}
+
+.history-amount.negative {
+  color: #ef4444;
+}
+
+/* Модальные окна */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+}
+
+.modal-content {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  width: 100%;
+  max-width: 400px;
+  animation: bounce 0.3s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: all 0.3s;
+}
+
+.modal-close:hover {
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  margin-bottom: var(--space-lg);
+}
+
+.modal-footer {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.modal-footer .btn {
+  flex: 1;
+}
+
+/* Формы */
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+  color: #374151;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 60px;
+  font-size: 16px;
+  transition: all 0.3s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #a855f7;
+}
+
+/* Кнопки */
+.btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 60px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #a855f7, #4facfe);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(168, 85, 247, 0.3);
+}
+
+.btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.alert {
+  padding: var(--space-sm);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+  font-size: 14px;
+}
+
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.alert-error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Пустое состояние */
+.empty-state {
+  text-align: center;
+  padding: var(--space-2xl);
+  color: #9ca3af;
+}
+
+.empty-emoji {
+  font-size: 48px;
+  margin-bottom: var(--space-sm);
+}
+
+/* Панель выбора карты */
+.card-selector {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+  overflow-x: auto;
+  padding-bottom: var(--space-xs);
+}
+
+.card-option {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  border: 2px solid transparent;
+}
+
+.card-option.active {
+  border-color: #a855f7;
+  background: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-option .card-emoji {
+  font-size: 20px;
+}
+
+/* Уведомление */
+.notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 60px;
+  font-size: 14px;
+  z-index: 1000;
+  animation: bounce 0.3s ease;
+}
+</style>
+</head>
+
+<body>
+<!-- ЭКРАН ВХОДА -->
+<div id="auth-screen">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="emoji">🐣</div>
+        <h1>KidsBank</h1>
+        <p style="color: #6b7280; margin-top: 8px;">Детский банк для весёлых покупок!</p>
+      </div>
+      
+      <div id="auth-message" class="alert hidden"></div>
+      
+      <div id="login-form">
+        <div class="form-group">
+          <input type="text" id="login-name" class="form-control" placeholder="Твоё имя">
+        </div>
+        <div class="form-group">
+          <input type="password" id="login-password" class="form-control" placeholder="Пароль (1234)">
+        </div>
+        <button id="login-btn" class="auth-btn">🐣 Войти в банк</button>
+        <div class="auth-link" id="show-register">✨ Создать новый аккаунт</div>
+      </div>
+      
+      <div id="register-form" style="display: none;">
+        <div class="form-group">
+          <input type="text" id="register-name" class="form-control" placeholder="Твоё имя">
+        </div>
+        <div class="form-group">
+          <input type="password" id="register-password" class="form-control" placeholder="Придумай пароль">
+        </div>
+        <button id="register-btn" class="auth-btn">🎉 Создать аккаунт</button>
+        <div class="auth-link" id="show-login">🔙 Уже есть аккаунт</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+<div id="main-screen" class="main-container hidden">
+  <div class="container">
+    <!-- Хедер -->
+    <div class="header">
+      <div class="header-content">
+        <div>
+          <div class="welcome-text">Привет,</div>
+          <div class="welcome-name" id="user-name">Друг!</div>
+        </div>
+        <button class="logout-btn" id="logout-btn">
+          <span class="material-icons">logout</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Выбор карты (если несколько) -->
+    <div id="card-selector" class="card-selector"></div>
+    
+    <!-- Банковская карта -->
+    <div class="bank-card" id="bank-card">
+      <div class="card-chip">
+        <div class="chip"></div>
+        <div style="font-size: 12px;">💳 Kids</div>
+      </div>
+      <div class="card-number" id="card-number">**** **** **** ****</div>
+      <div class="card-footer">
+        <div id="card-name">KIDS CARD</div>
+        <div>12/28</div>
+      </div>
+    </div>
+    
+    <!-- Баланс -->
+    <div class="balance-card">
+      <div class="balance-label">💰 Твой баланс</div>
+      <div class="balance-amount" id="balance">0 сом.</div>
+    </div>
+    
+    <!-- Кнопки действий -->
+    <div class="actions-grid">
+      <div class="action-btn-card" onclick="openDepositModal()">
+        <span class="action-emoji">➕</span>
+        <span class="action-label">Пополнить</span>
+      </div>
+      <div class="action-btn-card" onclick="openTransferModal()">
+        <span class="action-emoji">📤</span>
+        <span class="action-label">Перевести</span>
+      </div>
+      <div class="action-btn-card" onclick="openCardModal()">
+        <span class="action-emoji">💳</span>
+        <span class="action-label">Новая карта</span>
+      </div>
+      <div class="action-btn-card" onclick="showQR()">
+        <span class="action-emoji">📱</span>
+        <span class="action-label">Мой QR</span>
+      </div>
+    </div>
+    
+    <!-- Магазин игрушек -->
+    <div class="shop-section">
+      <div class="section-title">
+        <span>🎁 Магазин игрушек</span>
+        <span style="font-size: 12px; color: #a855f7;">нажимай на товар!</span>
+      </div>
+      <div class="products-grid" id="products-grid"></div>
+    </div>
+    
+    <!-- История операций -->
+    <div class="history-section">
+      <div class="section-title">
+        <span>📋 История</span>
+      </div>
+      <div id="history-list" class="history-list">
+        <div class="empty-state">
+          <div class="empty-emoji">✨</div>
+          <div>Пока нет операций</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- МОДАЛЬНЫЕ ОКНА -->
+
+<!-- Пополнение -->
+<div id="deposit-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">➕ Пополнить</div>
+      <button class="modal-close" onclick="closeModal('deposit-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Сумма (сомони)</label>
+        <input type="number" id="deposit-amount" class="form-control" placeholder="Например: 100">
+      </div>
+      <div id="deposit-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('deposit-modal')">Отмена</button>
+      <button class="btn btn-primary" id="confirm-deposit">Пополнить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Перевод -->
+<div id="transfer-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">📤 Перевести другу</div>
+      <button class="modal-close" onclick="closeModal('transfer-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Номер карты друга</label>
+        <input type="text" id="transfer-card" class="form-control" placeholder="0000 0000 0000 0000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Сумма</label>
+        <input type="number" id="transfer-amount" class="form-control" placeholder="Сумма">
+      </div>
+      <div id="transfer-message" class="alert hidden"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('transfer-modal')">Отмена</button>
+      <button class="btn btn-primary" id="confirm-transfer">Отправить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Новая карта -->
+<div id="card-modal" class="modal hidden">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">💳 Новая карта</div>
+      <button class="modal-close" onclick="closeModal('card-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Цвет карты</label>
+        <select id="card-color" class="form-control">
+          <option value="blue">💙 Синяя</option>
+          <option value="pink">💗 Розовая</option>
+          <option value="green">💚 Зелёная</option>
+          <option value="purple">💜 Фиолетовая</option>
+          <option value="orange">🧡 Оранжевая</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Название карты</label>
+        <input type="text" id="card-name-input" class="form-control" placeholder="Моя карточка">
+      </div>
+      <div id="card-message" class="alert hidden"></div>
+      <div style="background: #f3f4f6; padding: 12px; border-radius: 16px; margin-top: 12px;">
+        <div style="font-size: 12px; color: #6b7280;">💡 Стоимость новой карты: 0 сом.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('card-modal')">Отмена</button>
+      <button class="btn btn-primary" id="confirm-card">Создать</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR код -->
+<div id="qr-modal" class="modal hidden">
+  <div class="modal-content" style="text-align: center;">
+    <div class="modal-header">
+      <div class="modal-title">📱 Мой QR-код</div>
+      <button class="modal-close" onclick="closeModal('qr-modal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="qrcode-container" style="display: flex; justify-content: center;"></div>
+      <div style="margin-top: 16px; font-size: 12px; color: #6b7280;" id="qr-card-number"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Уведомление -->
+<div id="notification" class="notification hidden"></div>
+
+<script>
+// ==============================================
+// FIREBASE НАСТРОЙКИ
+// ==============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyDXGsfEZDvLdwHznJbnFwMzbsmTCuX3oYo",
+  authDomain: "bank-456d8.firebaseapp.com",
+  projectId: "bank-456d8",
+  storageBucket: "bank-456d8.firebasestorage.app",
+  messagingSenderId: "177805536343",
+  appId: "1:177805536343:web:021a1c5098ea6f5ecbc712"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ==============================================
+// ДАННЫЕ
+// ==============================================
+const CARD_COLORS = {
+  blue: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+  pink: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
+  green: 'linear-gradient(135deg, #10b981, #34d399)',
+  purple: 'linear-gradient(135deg, #a855f7, #d8b4fe)',
+  orange: 'linear-gradient(135deg, #f97316, #fbbf24)'
+};
+
+const TOYS = [
+  { id: 'ball', name: 'Мяч', price: 50, emoji: '⚽' },
+  { id: 'doll', name: 'Кукла', price: 150, emoji: '🎎' },
+  { id: 'car', name: 'Машинка', price: 80, emoji: '🚗' },
+  { id: 'lego', name: 'LEGO', price: 200, emoji: '🧱' },
+  { id: 'teddy', name: 'Мишка', price: 120, emoji: '🧸' },
+  { id: 'puzzle', name: 'Пазл', price: 60, emoji: '🧩' },
+  { id: 'robot', name: 'Робот', price: 250, emoji: '🤖' },
+  { id: 'book', name: 'Книга', price: 40, emoji: '📚' }
+];
+
+let currentUser = null;
+let currentUserData = null;
+let activeCardId = null;
+
+// ==============================================
+// ФУНКЦИИ БАЗЫ ДАННЫХ
+// ==============================================
+const Database = {
+  generateCardNumber() {
+    let num = '';
+    for (let i = 0; i < 16; i++) {
+      num += Math.floor(Math.random() * 10);
+      if ((i + 1) % 4 === 0 && i < 15) num += ' ';
+    }
+    return num;
+  },
+  
+  formatAmount(amount) {
+    return amount.toLocaleString('ru-RU') + ' сом.';
+  },
+  
+  async getUserByName(name) {
+    try {
+      const snapshot = await db.collection('kids').where('name', '==', name).get();
+      if (!snapshot.empty) {
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  },
+  
+  async getUserById(id) {
+    try {
+      const doc = await db.collection('kids').doc(id).get();
+      return doc.exists ? { id: doc.id, ...doc.data() } : null;
+    } catch (e) {
+      return null;
+    }
+  },
+  
+  async createUser(name, password) {
+    try {
+      const existing = await Database.getUserByName(name);
+      if (existing) return { success: false, error: 'Такое имя уже есть!' };
+      
+      const newCard = {
+        id: 'card_' + Date.now(),
+        number: Database.generateCardNumber(),
+        name: 'Моя карта',
+        color: 'blue',
+        balance: 500,
+        isPrimary: true,
+        createdAt: new Date().toISOString()
+      };
+      
+      const userData = {
+        name: name,
+        password: password,
+        cards: [newCard],
+        transactions: [{
+          id: Date.now(),
+          type: 'deposit',
+          amount: 500,
+          description: '🎁 Подарок от банка!',
+          timestamp: new Date().toISOString()
+        }],
+        createdAt: new Date().toISOString()
+      };
+      
+      await db.collection('kids').add(userData);
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: 'Ошибка создания' };
+    }
+  },
+  
+  async login(name, password) {
+    const user = await Database.getUserByName(name);
+    if (user && user.password === password) {
+      return { success: true, user };
+    }
+    return { success: false, error: 'Неверное имя или пароль' };
+  },
+  
+  async updateUser(userId, data) {
+    try {
+      await db.collection('kids').doc(userId).set(data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+  
+  async addTransaction(userId, userData, transaction) {
+    if (!userData.transactions) userData.transactions = [];
+    userData.transactions.unshift({
+      id: Date.now(),
+      ...transaction,
+      timestamp: new Date().toISOString()
+    });
+    await Database.updateUser(userId, userData);
+    return true;
+  },
+  
+  async findUserByCardNumber(cardNumber) {
+    const cleanNumber = cardNumber.replace(/\s/g, '');
+    const snapshot = await db.collection('kids').get();
+    for (const doc of snapshot.docs) {
+      const userData = doc.data();
+      const card = userData.cards?.find(c => c.number.replace(/\s/g, '') === cleanNumber);
+      if (card) {
+        return { userId: doc.id, userData, card };
+      }
+    }
+    return null;
+  },
+  
+  async transfer(fromUserId, fromUserData, fromCardId, toCardNumber, amount) {
+    const fromCard = fromUserData.cards.find(c => c.id === fromCardId);
+    if (!fromCard) return { success: false, error: 'Карта не найдена' };
+    
+    if (fromCard.balance < amount) {
+      return { success: false, error: `Не хватает ${Database.formatAmount(amount - fromCard.balance)}` };
+    }
+    
+    const recipient = await Database.findUserByCardNumber(toCardNumber);
+    if (!recipient) {
+      return { success: false, error: 'Карта друга не найдена' };
+    }
+    
+    fromCard.balance -= amount;
+    recipient.card.balance += amount;
+    
+    await Database.updateUser(fromUserId, fromUserData);
+    await Database.updateUser(recipient.userId, recipient.userData);
+    
+    await Database.addTransaction(fromUserId, fromUserData, {
+      type: 'transfer_out',
+      amount: amount,
+      description: `📤 Перевод другу на ${recipient.card.number}`
+    });
+    
+    await Database.addTransaction(recipient.userId, recipient.userData, {
+      type: 'transfer_in',
+      amount: amount,
+      description: `📥 Перевод от ${fromUserData.name}`
+    });
+    
+    return { success: true };
+  },
+  
+  async buyProduct(userId, userData, cardId, product) {
+    const card = userData.cards.find(c => c.id === cardId);
+    if (!card) return { success: false, error: 'Карта не найдена' };
+    
+    if (card.balance < product.price) {
+      return { success: false, error: `Не хватает ${Database.formatAmount(product.price - card.balance)}` };
+    }
+    
+    card.balance -= product.price;
+    
+    await Database.addTransaction(userId, userData, {
+      type: 'purchase',
+      amount: product.price,
+      description: `🎁 Покупка: ${product.emoji} ${product.name}`
+    });
+    
+    await Database.updateUser(userId, userData);
+    
+    return { success: true };
+  },
+  
+  async addCard(userId, userData, cardName, color) {
+    const newCard = {
+      id: 'card_' + Date.now(),
+      number: Database.generateCardNumber(),
+      name: cardName || 'Новая карта',
+      color: color || 'blue',
+      balance: 0,
+      isPrimary: false,
+      createdAt: new Date().toISOString()
+    };
+    
+    userData.cards.push(newCard);
+    await Database.updateUser(userId, userData);
+    return { success: true, card: newCard };
+  },
+  
+  async deposit(userId, userData, cardId, amount) {
+    const card = userData.cards.find(c => c.id === cardId);
+    if (!card) return { success: false };
+    
+    card.balance += amount;
+    
+    await Database.addTransaction(userId, userData, {
+      type: 'deposit',
+      amount: amount,
+      description: `➕ Пополнение на ${Database.formatAmount(amount)}`
+    });
+    
+    await Database.updateUser(userId, userData);
+    return { success: true };
+  }
+};
+
+// ==============================================
+// UI ФУНКЦИИ
+// ==============================================
+function showNotification(msg, isSuccess = true) {
+  const notification = document.getElementById('notification');
+  notification.textContent = msg;
+  notification.style.background = isSuccess ? '#10b981' : '#ef4444';
+  notification.classList.remove('hidden');
+  setTimeout(() => {
+    notification.classList.add('hidden');
+  }, 2000);
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.add('hidden');
+}
+
+function updateUI() {
+  if (!currentUserData) return;
+  
+  document.getElementById('user-name').textContent = currentUserData.name;
+  
+  const cards = currentUserData.cards || [];
+  
+  if (!activeCardId && cards.length > 0) {
+    activeCardId = cards[0].id;
+  }
+  
+  const activeCard = cards.find(c => c.id === activeCardId);
+  
+  if (activeCard) {
+    const cardColors = {
+      blue: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+      pink: 'linear-gradient(135deg, #ff6b9d, #ff8e53)',
+      green: 'linear-gradient(135deg, #10b981, #34d399)',
+      purple: 'linear-gradient(135deg, #a855f7, #d8b4fe)',
+      orange: 'linear-gradient(135deg, #f97316, #fbbf24)'
+    };
+    document.getElementById('bank-card').style.background = cardColors[activeCard.color] || cardColors.blue;
+    document.getElementById('card-number').textContent = activeCard.number;
+    document.getElementById('card-name').textContent = activeCard.name.toUpperCase();
+    document.getElementById('balance').textContent = Database.formatAmount(activeCard.balance);
+  }
+  
+  updateCardSelector();
+  updateHistory();
+}
+
+function updateCardSelector() {
+  const container = document.getElementById('card-selector');
+  const cards = currentUserData.cards || [];
+  
+  if (cards.length <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  const emojis = {
+    blue: '💙',
+    pink: '💗',
+    green: '💚',
+    purple: '💜',
+    orange: '🧡'
+  };
+  
+  container.innerHTML = cards.map(card => `
+    <div class="card-option ${activeCardId === card.id ? 'active' : ''}" onclick="selectCard('${card.id}')">
+      <span class="card-emoji">${emojis[card.color] || '💳'}</span>
+      <span>${card.name}</span>
+    </div>
+  `).join('');
+}
+
+function selectCard(cardId) {
+  activeCardId = cardId;
+  updateUI();
+}
+
+function updateHistory() {
+  const container = document.getElementById('history-list');
+  const transactions = currentUserData.transactions || [];
+  
+  if (transactions.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-emoji">✨</div>
+        <div>Пока нет операций</div>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = transactions.slice(0, 20).map(t => {
+    const isPositive = t.type === 'deposit' || t.type === 'transfer_in';
+    return `
+      <div class="history-item">
+        <div class="history-info">
+          <div class="history-emoji">${t.type === 'deposit' ? '➕' : t.type === 'purchase' ? '🎁' : t.type === 'transfer_out' ? '📤' : '📥'}</div>
+          <div>
+            <div class="history-text">${t.description}</div>
+            <div class="history-date">${new Date(t.timestamp).toLocaleDateString()}</div>
+          </div>
+        </div>
+        <div class="history-amount ${isPositive ? 'positive' : 'negative'}">
+          ${isPositive ? '+' : '-'} ${Database.formatAmount(t.amount)}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function initShop() {
+  const container = document.getElementById('products-grid');
+  container.innerHTML = TOYS.map(toy => `
+    <div class="product-item" onclick="buyToy('${toy.id}')">
+      <div class="product-emoji">${toy.emoji}</div>
+      <div class="product-name">${toy.name}</div>
+      <div class="product-price">${Database.formatAmount(toy.price)}</div>
+    </div>
+  `).join('');
+}
+
+async function buyToy(toyId) {
+  const toy = TOYS.find(t => t.id === toyId);
+  if (!toy) return;
+  
+  const card = currentUserData.cards.find(c => c.id === activeCardId);
+  if (!card) {
+    showNotification('Сначала выбери карту!', false);
+    return;
+  }
+  
+  const result = await Database.buyProduct(currentUser.id, currentUserData, activeCardId, toy);
+  
+  if (result.success) {
+    currentUserData = await Database.getUserById(currentUser.id);
+    updateUI();
+    showNotification(`🎉 Ты купил ${toy.emoji} ${toy.name} за ${Database.formatAmount(toy.price)}!`, true);
+  } else {
+    showNotification(result.error, false);
+  }
+}
+
+async function handleDeposit() {
+  const amount = parseFloat(document.getElementById('deposit-amount').value);
+  const msgDiv = document.getElementById('deposit-message');
+  
+  if (!amount || amount <= 0) {
+    showMessage(msgDiv, 'Введи сумму (например: 100)', false);
+    return;
+  }
+  
+  const result = await Database.deposit(currentUser.id, currentUserData, activeCardId, amount);
+  
+  if (result.success) {
+    currentUserData = await Database.getUserById(currentUser.id);
+    updateUI();
+    showMessage(msgDiv, `✅ Пополнено на ${Database.formatAmount(amount)}!`, true);
+    setTimeout(() => {
+      closeModal('deposit-modal');
+      document.getElementById('deposit-amount').value = '';
+    }, 1000);
+  } else {
+    showMessage(msgDiv, 'Ошибка пополнения', false);
+  }
+}
+
+async function handleTransfer() {
+  const toCard = document.getElementById('transfer-card').value;
+  const amount = parseFloat(document.getElementById('transfer-amount').value);
+  const msgDiv = document.getElementById('transfer-message');
+  
+  if (!toCard || toCard.replace(/\s/g, '').length !== 16) {
+    showMessage(msgDiv, 'Введи номер карты друга (16 цифр)', false);
+    return;
+  }
+  
+  if (!amount || amount <= 0) {
+    showMessage(msgDiv, 'Введи сумму перевода', false);
+    return;
+  }
+  
+  const result = await Database.transfer(currentUser.id, currentUserData, activeCardId, toCard, amount);
+  
+  if (result.success) {
+    currentUserData = await Database.getUserById(currentUser.id);
+    updateUI();
+    showMessage(msgDiv, `✅ Переведено ${Database.formatAmount(amount)} другу!`, true);
+    setTimeout(() => {
+      closeModal('transfer-modal');
+      document.getElementById('transfer-card').value = '';
+      document.getElementById('transfer-amount').value = '';
+    }, 1000);
+  } else {
+    showMessage(msgDiv, result.error, false);
+  }
+}
+
+async function handleAddCard() {
+  const cardName = document.getElementById('card-name-input').value;
+  const color = document.getElementById('card-color').value;
+  const msgDiv = document.getElementById('card-message');
+  
+  const result = await Database.addCard(currentUser.id, currentUserData, cardName, color);
+  
+  if (result.success) {
+    currentUserData = await Database.getUserById(currentUser.id);
+    updateUI();
+    showMessage(msgDiv, `✅ Карта "${cardName || 'Новая карта'}" создана!`, true);
+    setTimeout(() => {
+      closeModal('card-modal');
+      document.getElementById('card-name-input').value = '';
+    }, 1000);
+  } else {
+    showMessage(msgDiv, 'Ошибка создания карты', false);
+  }
+}
+
+function showMessage(element, msg, success) {
+  element.textContent = msg;
+  element.className = `alert ${success ? 'alert-success' : 'alert-error'}`;
+  element.classList.remove('hidden');
+  if (success) {
+    setTimeout(() => element.classList.add('hidden'), 2000);
+  }
+}
+
+function showQR() {
+  const card = currentUserData.cards.find(c => c.id === activeCardId);
+  if (!card) return;
+  
+  const qrContainer = document.getElementById('qrcode-container');
+  qrContainer.innerHTML = '';
+  
+  // Простой QR-код через canvas
+  const text = card.number.replace(/\s/g, '');
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  
+  // Рисуем простой QR-подобный код
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, 200, 200);
+  ctx.fillStyle = '#a855f7';
+  
+  // Простая визуализация для демо (в реальном проекте используй qrcode библиотеку)
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    for (let j = 0; j < 8; j++) {
+      if (code & (1 << j)) {
+        const x = (i % 16) * 12 + 10;
+        const y = Math.floor(i / 16) * 12 + 10;
+        ctx.fillRect(x, y, 8, 8);
+      }
+    }
+  }
+  
+  // Добавляем рамку
+  ctx.strokeStyle = '#a855f7';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(5, 5, 190, 190);
+  
+  qrContainer.appendChild(canvas);
+  document.getElementById('qr-card-number').textContent = card.number;
+  document.getElementById('qr-modal').classList.remove('hidden');
+}
+
+function openDepositModal() {
+  document.getElementById('deposit-modal').classList.remove('hidden');
+}
+
+function openTransferModal() {
+  document.getElementById('transfer-modal').classList.remove('hidden');
+}
+
+function openCardModal() {
+  document.getElementById('card-modal').classList.remove('hidden');
+}
+
+// ==============================================
+// АВТОРИЗАЦИЯ
+// ==============================================
+async function handleRegister() {
+  const name = document.getElementById('register-name').value.trim();
+  const password = document.getElementById('register-password').value;
+  const message = document.getElementById('auth-message');
+  
+  message.classList.add('hidden');
+  
+  if (!name) {
+    showMessage(message, 'Придумай своё имя!', false);
+    return;
+  }
+  
+  if (!password || password.length < 3) {
+    showMessage(message, 'Придумай пароль (минимум 3 символа)', false);
+    return;
+  }
+  
+  const result = await Database.createUser(name, password);
+  
+  if (result.success) {
+    showMessage(message, '✅ Аккаунт создан! Войди в банк', true);
+    setTimeout(() => {
+      document.getElementById('register-form').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+      document.getElementById('register-name').value = '';
+      document.getElementById('register-password').value = '';
+    }, 1500);
+  } else {
+    showMessage(message, result.error, false);
+  }
+}
+
+async function handleLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  const password = document.getElementById('login-password').value;
+  const message = document.getElementById('auth-message');
+  
+  message.classList.add('hidden');
+  
+  if (!name) {
+    showMessage(message, 'Введи своё имя', false);
+    return;
+  }
+  
+  const result = await Database.login(name, password);
+  
+  if (result.success) {
+    currentUser = result.user;
+    currentUserData = result.user;
+    activeCardId = currentUserData.cards[0]?.id || null;
+    
+    document.getElementById('auth-screen').classList.add('hidden');
+    document.getElementById('main-screen').classList.remove('hidden');
+    updateUI();
+    initShop();
+    showMessage(message, `🐣 Добро пожаловать, ${name}!`, true);
+  } else {
+    showMessage(message, result.error, false);
+  }
+}
+
+function handleLogout() {
+  currentUser = null;
+  currentUserData = null;
+  activeCardId = null;
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('main-screen').classList.add('hidden');
+  document.getElementById('login-name').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+// ==============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ==============================================
+document.getElementById('login-btn')?.addEventListener('click', handleLogin);
+document.getElementById('register-btn')?.addEventListener('click', handleRegister);
+document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+document.getElementById('show-register')?.addEventListener('click', () => {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+});
+document.getElementById('show-login')?.addEventListener('click', () => {
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('register-form').style.display = 'none';
+});
+document.getElementById('confirm-deposit')?.addEventListener('click', handleDeposit);
+document.getElementById('confirm-transfer')?.addEventListener('click', handleTransfer);
+document.getElementById('confirm-card')?.addEventListener('click', handleAddCard);
+
+initShop();
+</script>
+</body>
+</html>
